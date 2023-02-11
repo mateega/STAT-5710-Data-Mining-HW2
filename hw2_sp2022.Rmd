@@ -6,10 +6,6 @@ author:
 - Group Member 3
 date: 'Due: 11:59 PM,  Sunday, 02/12'
 output:
-  pdf_document:
-    number_sections: yes
-    toc: yes
-    toc_depth: '4'
   html_document:
     code_folding: show
     highlight: haddock
@@ -18,6 +14,10 @@ output:
     toc: yes
     toc_depth: 4
     toc_float: yes
+  pdf_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: '4'
   word_document:
     toc: yes
     toc_depth: '4'
@@ -136,7 +136,7 @@ The following 10 questions are answered as 1: strongly agree, 2: agree, 3: disag
 
 Load the data. Do a quick EDA to get familiar with the data set. Pay attention to the unit of each variable. Are there any missing values? 
 
-```{r quick skim of the data}
+```{r quick skim of the data, echo=FALSE}
 temp <- read.csv('data/NLSY79.csv', header = T, stringsAsFactors = F)
 # # missing values? real variables vs. factors? are varable values reasonable?
 str(temp)
@@ -144,7 +144,7 @@ summary(temp)
 levels(as.factor(temp$Job05))
 table(as.factor(temp$Job05))
 ```
-
+<p style="color:blue">
 Observations:
 
 * Some of the income values are negative -- this doesn't seem right.
@@ -152,7 +152,7 @@ Observations:
 * Some of the HeightFeet05 are negative which doesn't make sense.
 * A number of test score values are 0, which I would assume means these people never took these exams.
 * All of the esteem columns seem to be missing no entries.
-
+</p>
 
 ## Self esteem evaluation
 
@@ -162,9 +162,11 @@ Let concentrate on Esteem scores evaluated in 87.
 
 Observations:
 
+<p style="color:blue">
 * There are no missing values.
 * The average of the possible respondent responses (1-4) is 2.5. However, all of the questions either skew agree (i.e., a 1.5 mean) or skew disagree (i.e., a 3.5 mean).
 * One possible issue is that when a respondent responses agree, their response could indicate either low or high self esteem based on the question asked. For example, a person with strong self esteem would response with a low number (1 or 2) to a question like Question 1: “I am a person of worth” but with a high number (3 or 4) to a question like Question 5: “I do not have much to be proud of." We will solve this issue in the following step.
+</p>
 
 ```{r summary over esteem variables, echo=TRUE} 
 summary(temp$Esteem87_1)
@@ -200,11 +202,11 @@ data.esteem[, c(1,2,4,6,7)] <- 5 - data.esteem[, c(1,2,4,6,7)]
 
 2. Write a brief summary with necessary plots about the 10 esteem measurements.
 
-* Plotting the respondents responses using a stacked bar graph we see that most respondents have higher self esteem and that very few respondents were putting 1s (less than 500) compared to 4s (greater than 10,000).
-* Question 2 has the highest mean (3.6), while Question 9 has the lowest mean (3.06).
+* <p style="color:blue"> Plotting the respondents responses using a stacked bar graph we see that most respondents have higher self esteem and that very few respondents were putting 1s (less than 500) compared to 4s (greater than 10,000). <p>
+* <p style="color:blue"> Question 2 has the highest mean (3.6), while Question 9 has the lowest mean (3.06). </p>
 
 
-```{r brief summary, echo=TRUE}
+```{r brief summary, echo=FALSE}
 data.esteemMelt <- melt(data.esteem)
 
 g <- ggplot(data.esteemMelt, aes(x=value, fill=variable )) + geom_bar(position = "stack")
@@ -242,7 +244,7 @@ names(pc.10)
 
     a) Report the PC1 and PC2 loadings. Are they unit vectors? Are they orthogonal? 
     
-    * The two loadings are orthoginal with unit 1.
+* <p style="color:blue"> The two loadings are orthoginal with unit 1. <p>
     
 ```{r loadings}
 pc.10.loading <- pc.10$rotation
@@ -253,24 +255,88 @@ pc.10.loading[,2] # pc2 loadings
 ```
     
     b) Are there good interpretations for PC1 and PC2? (If loadings are all negative, take the positive loadings for the ease of interpretation)
+    
+* <p style="color:blue"> PC1 interpretation: all of the coefficients are positive and around 0.3. This means there is a positive correlation between almost oll of the variables. So a growing positive alue in PC1 means a rather uniform gorwth of values in al of the varirables and this means that as much a person has a higher value in PC1, they are likeley to have a higher response/answer (1-4) to almost all of the 10 questions. This says that the higher a person's response (1-4) to the 10 questions, the higher their self-esteem, which makes sense. Since all of the coefficients are around 0.3, PC1 is proportional to the total of the 10 answers/responses. </p>
+
+* <p style="color:blue"> PC 2 interpretation: </p>
   
     c) How is the PC1 score obtained for each subject? Write down the formula.
     
+* <p style="color:blue"> The PC1 is the linear combination of the 10 scores which minimizes the total squared perpendicular distance. </p>
+* <p style="color:blue"> for each subject, their PC1 score is 0.324 x (q1 response) + 0.333 x (q2 response) + 0.322 x (q3 response) + 0.324 x (q4 response) + 0.315 x (q5 response) + 0.347 x (q6 response) + 0.315 x (q7 response) + 0.280 x (q8 response) + 0.277 x (q9 response) + 0.318 x (q10 response). </p>
+    
     d) Are PC1 scores and PC2 scores in the data uncorrelated? 
     
+* <p style="color:blue"> Yes the PC1 scores and PC2 scores are uncorrelated. PC1 scores has greater variance than PC2 scores. </p>
+    
     e) Plot PVE (Proportion of Variance Explained) and summarize the plot. 
+    
+* <p style="color:blue"> From a scree plot of the variances of each pc we see that a large portion of the total variance is explained by the leading principle component (0.469 of the total variance). The variances of each PC are decreasing (i.e., 0.469 from PC1 while 0.0294 from PC10). </p>
+    
+```{r pve, echo=TRUE}
+summary(pc.10)$importance
+plot(pc.10) # variances of each pc
+
+
+plot(summary(pc.10)$importance[2,], # scree plot of PVEs
+     ylab="PVE",
+     xlab="Number of PCs",
+     pch = 16,
+     main="Scree plot of PVE")
+
+```
   
     f) Also plot CPVE (Cumulative Proportion of Variance Explained). What proportion of the variance in the data is explained by the first two principal components?
+    
+* <p style="color:blue"> Plotting the CPVE, we see that 0.59 of the total variance in the data is explained by the first two principal components. </p>
+  
+```{r cpve, echo=TRUE}
+
+plot(summary(pc.10)$importance[3,],
+     ylab="Cumulative PVE",
+     xlab="Number of PCs",
+     pch = 16,
+     main="Scree plot of Cumulative PVE")
+```
+    
   
     g) PC’s provide us with a low dimensional view of the self-esteem scores. Use a biplot with the first two PC's to display the data.  Give an interpretation of PC1 and PC2 from the plot. (try `ggbiplot` if you could, much prettier!)
+    
+    
+* <p style="color:blue"> A biplot with PC1 and PC2 indicated that a) PC1 loadings are similar in magnitudes and with same signs, b) PC2 captures difference between total of question 8, 9, and 10 and total of question 1, 2, and 4. Questions 3, 5, 6, 7 have little affect, c) questions 8, 9, and 10 are highly correlated and so are questions 1, 2, and 4. </p>
+    
+    
+```{r biplot of first two PCs, echo=TRUE} 
+limx <- c(-0,0.03)
+limy <- c(-0.05,0.05)
+biplot(pc.10,
+       xlim=limx,
+       ylim=limy,
+       main="Biplot of PC1 and PC2")
+```
 
 5. Apply k-means to cluster subjects on the original esteem scores
 
     a) Find a reasonable number of clusters using within sum of squared with elbow rules.
+
+* <p style="color:blue"> Based on the "Elbow method" and the result of our factoextra::fviz_nbclust call, we will use k=2 to have two clusters. </p> 
+    
+```{r number of clusters via elbow method, echo=TRUE} 
+set.seed(0)
+factoextra::fviz_nbclust(data.esteem[,-1], kmeans, method = "wss")
+```
     
     b) Can you summarize common features within each cluster?
     
+    * Participants within each cluster will have had similar responses to the 10 questions as others in their cluster.
+    
     c) Can you visualize the clusters with somewhat clear boundaries? You may try different pairs of variables and different PC pairs of the esteem scores.
+    
+```{r visualize the clusters} 
+
+
+
+```
 
 
 6. We now try to find out what factors are related to self-esteem? PC1 of all the Esteem scores is a good variable to summarize one's esteem scores. We take PC1 as our response variable. 
@@ -404,9 +470,11 @@ Presume that $\mathbf{x}$ and $\mathbf{y}$ are linearly related with a normal er
 
 We can create a sample input vector ($n = 40$) for $\mathbf{x}$ with the following code:
 
-```{r, eval = F, echo = TRUE}
+```{r generate y vector, eval = F, echo = TRUE}
 # Generates a vector of size 40 with equally spaced values between 0 and 1, inclusive
 x <- seq(0, 1, length = 40)
+set.seed(1)
+y <- 1+1.2*x+rnorm(40,0,sd=2)
 ```
 
 
@@ -418,12 +486,38 @@ Create a corresponding output vector for $\mathbf{y}$ according to the equation 
 ### Understand the model
 i. Find the LS estimates of $\boldsymbol{\beta}_0$ and $\boldsymbol{\beta}_1$, using the `lm()` function. What are the true values of $\boldsymbol{\beta}_0$ and $\boldsymbol{\beta}_1$? Do the estimates look to be good? 
 
+From the `lm()` function, we get $\boldsymbol{\beta}_0 = 1.331$ and $\boldsymbol{\beta}_1 = 0.906$, vs true values of 1 and 1.2, so this isn't a perfect estimate, which is a result of the normal error with SD of 2.
+
+```{r LS estimates}
+pairs <- data.frame(x = x, y = y)
+plot(x,y,
+     main="sample output vector for y according to y = 1 + 1.2x + normal error with sd=2")
+fit1 <- lm(y ~ x, data=pairs)
+fit1
+```
+
 ii. What is your RSE for this linear model fit? Is it close to $\sigma = 2$? 
+
+The RSE is 1.79 which is fairly close to 2 (10.3% off)
+
+```{r rse of model}
+rse <- summary(fit1)$sigma
+rse
+(rse-2)/2
+```
 
 ii. What is the 95% confidence interval for $\boldsymbol{\beta}_1$? Does this confidence interval capture the true $\boldsymbol{\beta}_1$?
 
+
 iii. Overlay the LS estimates and the true lines of the mean function onto a copy of the scatterplot you made above.
 
+
+```{r LS estimates}
+plot(x,y,
+     main="sample output vector for y according to y = 1 + 1.2x + normal error with sd=2")
+plot(fit1)
+
+```
 
 ### diagnoses
 
