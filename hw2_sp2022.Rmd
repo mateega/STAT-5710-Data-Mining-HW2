@@ -136,7 +136,7 @@ The following 10 questions are answered as 1: strongly agree, 2: agree, 3: disag
 
 Load the data. Do a quick EDA to get familiar with the data set. Pay attention to the unit of each variable. Are there any missing values? 
 
-```{r quick skim of the data, echo=FALSE}
+```{r quick skim of the data, eval = F, echo=FALSE}
 temp <- read.csv('data/NLSY79.csv', header = T, stringsAsFactors = F)
 # # missing values? real variables vs. factors? are varable values reasonable?
 str(temp)
@@ -229,7 +229,7 @@ summary(data.esteem$q10)
 
 * There is a positive coorelation between all esteem scores. This reachnes from 0.24 (q1 and q9) to 0.7 (q1 and q2).
 
-```{r correlation table, echo=TRUE} 
+```{r correlation table, eval = F, echo=TRUE} 
 data.esteem
 res <- cor(data.esteem)
 round(res, 2)
@@ -332,9 +332,15 @@ factoextra::fviz_nbclust(data.esteem[,-1], kmeans, method = "wss")
     
     c) Can you visualize the clusters with somewhat clear boundaries? You may try different pairs of variables and different PC pairs of the esteem scores.
     
-```{r visualize the clusters} 
-
-
+```{r visualize the clusters, echo=TRUE} 
+ as.data.frame(pc.10$x) %>%
+  ggplot(aes(x=PC1, y=PC10)) +
+  geom_point()+
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0) +
+  ggtitle("PC2 vs. PC1") +
+  theme_bw()
+pairs(pc.10$x, xlim=c(-4, 4), ylim=c(-4, 4), col=rainbow(6), pch=16)
 
 ```
 
@@ -350,14 +356,60 @@ factoextra::fviz_nbclust(data.esteem[,-1], kmeans, method = "wss")
       - Household environment: Imagazine, Inewspaper, Ilibrary, MotherEd, FatherEd, FamilyIncome78. Do set indicators `Imagazine`, `Inewspaper` and `Ilibrary` as factors. 
     
       - You may use PC1 of ASVAB as level of intelligence
+      
+```{r 1 6a, echo=TRUE}
+# eda
+esteemFactors <- data.frame(temp$Gender, temp$Education05, temp$Income87, temp$Job05, temp$Weight05, temp$HeightFeet05, temp$HeightInch05, factor(temp$Imagazine), factor(temp$Inewspaper), factor(temp$Ilibrary), temp$MotherEd, temp$FatherEd, temp$FamilyIncome78)
+esteemFactors$totalHeightMeters5 <- ((esteemFactors$temp.HeightFeet05 * 12)+ esteemFactors$temp.HeightInch05) *  0.0254
+esteemFactors$BMI05 <- (esteemFactors$temp.Weight05 * 0.453592) / (esteemFactors$totalHeightMeters5^2)
+pc.10.loading[,1] # 0.324 0.333 0.322 0.324 0.315 0.347 0.315 0.280 0.277 0.318 
+esteemFactors$PC1 <- data.frame(data.esteem$q1 * 0.324 + data.esteem$q2 * 0.333 + data.esteem$q3 * 0.322 + data.esteem$q4 * 0.324 + data.esteem$q5 * 0.315 + data.esteem$q6 * 0.347 + data.esteem$q7 * 0.315 + data.esteem$q8 * 0.280 + data.esteem$q9 * 0.277 + data.esteem$q10 * 0.318)
+colnames(esteemFactors)[1] = "gender"
+colnames(esteemFactors)[2] = "Education05"
+colnames(esteemFactors)[3] = "Income87"
+colnames(esteemFactors)[4] = "Job05"
+colnames(esteemFactors)[5] = "Weight05"
+colnames(esteemFactors)[6] = "HeightFeet05"
+colnames(esteemFactors)[7] = "HeightInch05"
+colnames(esteemFactors)[8] = "Imagazine"
+colnames(esteemFactors)[9] = "Inewspaper"
+colnames(esteemFactors)[10] = "Ilibrary"
+colnames(esteemFactors)[11] = "MotherEd"
+colnames(esteemFactors)[12] = "FatherEd"
+colnames(esteemFactors)[13] = "FamilyIncome78"
+colnames(esteemFactors)[16] = "PC1"
+
+data.ASVAB <- data.frame(temp$Science,temp$Arith,temp$Word,temp$Parag,temp$Number,temp$Coding,temp$Auto,temp$Math,temp$Mechanic,temp$Elec,temp$AFQT)
+
+pc.ASVAB <- prcomp(data.ASVAB, scale=TRUE)
+pc.ASVAB.loading <- pc.ASVAB$rotation
+knitr::kable(pc.ASVAB.loading)
+pc.ASVAB.loading[,1] # 0.328 0.336 0.330 0.310 0.255 0.217 0.247 0.322 0.291 0.297 0.353 
+esteemFactors$PC1ASVAB <- data.frame(temp$Science*0.328+temp$Arith*0.336+temp$Word*0.330+temp$Parag*0.310+temp$Number*0.255+temp$Coding*0.217+temp$Auto*0.247+temp$Math*0.322+temp$Mechanic*0.291+temp$Elec*0.297+temp$AFQT*0.353)
+``` 
         
     b)   Run a few regression models between PC1 of all the esteem scores and suitable variables listed in a). Find a final best model with your own criterion. 
 
       - How did you land this model? Run a model diagnosis to see if the linear model assumptions are reasonably met. 
         
       - Write a summary of your findings. In particular, explain what and how the variables in the model affect one's self-esteem. 
-        
 
+We chose the model with all variables. Running a model diagnosis, we see that both the Residuals vs Fitted and qqnormal plots look fine.
+
+```{r regression models, echo=TRUE}
+fit1 <- lm(unlist(PC1) ~ unlist(PC1ASVAB), data=esteemFactors)
+fit2 <- lm(unlist(PC1) ~ Education05, data=esteemFactors)
+fit3 <- lm(unlist(PC1) ~ FamilyIncome78, data=esteemFactors)
+fit.all <- lm(unlist(PC1) ~ unlist(PC1ASVAB) + gender + Education05 + Income87 + Job05 + Weight05 + HeightFeet05 + HeightInch05 + Imagazine + Inewspaper + Ilibrary + MotherEd + FatherEd + FamilyIncome78 + totalHeightMeters5 + BMI05 + unlist(PC1ASVAB), data=esteemFactors)
+
+summary(fit1)
+summary(fit2)
+summary(fit.all)
+anova(fit.all)
+par(mfrow=c(1,2))
+plot(fit.all, 1)
+plot(fit.all, 2)
+```
 
 # Case study 2: Breast cancer sub-type
 
@@ -387,78 +439,159 @@ brca <- brca[,-1]
 
     a) How many patients are there in each sub-type? 
 
+```{r 2 1a, echo=TRUE}
+table(brca_subtype)
+```
+
     b) Randomly pick 5 genes and plot the histogram by each sub-type.
+
+```{r 2 1b,, echo=TRUE}
+
+
+num_gene <- ncol(brca)
+# randomly select 10 gene
+set.seed(10)
+sample_idx <- sample(num_gene, 5)
+# plot count number histogram for each gene
+brca %>%
+select(all_of(sample_idx)) %>% # select column by index
+pivot_longer(cols = everything()) %>% # for facet(0)
+ggplot(aes(x = value, y = ..density..)) +
+geom_histogram(aes(fill = name)) +
+facet_wrap(~name, scales = "free") +
+theme_bw() +
+theme(legend.position = "none")
+```
 
     c) Remove gene with zero count and no variability. Then apply logarithmic transform.
 
+```{r 2 1c}
+sel_cols <- which(colSums(abs(brca)) != 0)
+brca_sub <- brca[, sel_cols, with=F]
+
+brca_sub <- log2(as.matrix(brca_sub+1e-10))
+```
 
 2. Apply kmeans on the transformed dataset with 4 centers and output the discrepancy table between the real sub-type `brca_subtype` and the cluster labels.
+
+```{r 2 2, echo=TRUE}
+brca_sub_kmeans <- kmeans(x = brca_sub, 4)
+#saveRDS(brca_sub_kmeans, "brca_kmeans.RDS")
+#brca_sub_kmeans <- readRDS("output/brca_kmeans.RDS")
+
+table(brca_subtype, brca_sub_kmeans$cluster)
+```
 
 3. Spectrum clustering: to scale or not to scale?
 
     a) Apply PCA on the centered and scaled dataset. How many PCs should we use and why? You are encouraged to use `irlba::irlba()`.
-    
+
+```{r 3a, echo=TRUE}
+pca_ret <- prcomp(brca_sub, center = T, scale. = T)
+pve <- summary(pca_ret)$importance[2, 1:10]
+plot(pve, type="b", pch = 19, frame = FALSE)
+```
+According to the elbow rule, we should use 4 principal components as by that point the overwhelming majority of the variance is accounted for.
+  
     b) Plot PC1 vs PC2 of the centered and scaled data and PC1 vs PC2 of the centered but unscaled data side by side. Should we scale or not scale for clustering process? Why? (Hint: to put plots side by side, use `gridExtra::grid.arrange()` or `ggpubr::ggrrange()` or `egg::ggrrange()` for ggplots; use `fig.show="hold"` as chunk option for base plots)
+
+```{r 3b, echo=TRUE}
+#Centered & Scaled
+library(gridExtra)
+p <- data.table(x = pca_ret$x[,1],
+y = pca_ret$x[,2]) %>%
+ggplot() +
+geom_point(aes(x = x, y = y)) +
+theme_bw() +
+xlab("PC1") +
+ylab("PC2") + 
+ggtitle("Centered & Scaled")
+p
+
+pca_ret_centered_unscaled <- prcomp(brca_sub, center = T, scale. = F)
+p2 <- data.table(x = pca_ret_centered_unscaled$x[,1],
+y = pca_ret$x[,2]) %>%
+ggplot() +
+geom_point(aes(x = x, y = y)) +
+theme_bw() +
+xlab("PC1") +
+ylab("PC2") + 
+ggtitle("Centered but Unscaled")
+p2
+
+grid.arrange(p, p2, ncol = 2)
+```
+
+No, we already took the log of the data so I believe it is not necessary to scale the data since the log transform already helps handle skewness and asymmetries in the data.
 
 4. Spectrum clustering: center but do not scale the data
 
     a) Use the first 4 PCs of the centered and unscaled data and apply kmeans. Find a reasonable number of clusters using within sum of squared with the elbow rule.
     
+```{r 2 4a, echo=TRUE}
+#kmean_ret <- kmeans(x = pca_ret_centered_unscaled$x[, 1:4], 4)
+    
+wss <- function(df, k) {
+  kmeans(df, k, nstart = 10)$tot.withinss
+}
+    
+k.values <- 1:10
+
+wss_values <- sapply(k.values, 
+                     function(k) kmeans(pca_ret_centered_unscaled$x[, 1:4], centers = k)$tot.withinss)
+    
+
+# extract wss for 1:10 clusters
+wss_values <- map_dbl(k.values, function(k) wss(pca_ret_centered_unscaled$x[, 1:4], k))
+plot(k.values, wss_values,
+type="b", pch = 19, frame = FALSE,
+xlab="Number of clusters K",
+ylab="Total within-clusters sum of squares")
+```
+    
     b) Choose an optimal cluster number and apply kmeans. Compare the real sub-type and the clustering label as follows: Plot scatter plot of PC1 vs PC2. Use point color to indicate the true cancer type and point shape to indicate the clustering label. Plot the kmeans centroids with black dots. Summarize how good is clustering results compared to the real sub-type.
     
+```{r 2 4b, echo=TRUE}
+#Doesnt work
+kmean_ret <- kmeans(x = pca_ret_centered_unscaled$x[, 1:4], 4)
+
+p <- data.table(x = pca_ret_centered_unscaled$x[,1],
+y = pca_ret_centered_unscaled$x[,2],
+col = as.factor(brca_subtype),
+cl = as.factor(kmean_ret$cluster)) %>%
+ggplot() +
+geom_point(aes(x = x, y = y, col = col, shape = cl)) +
+geom_point(data = as.data.frame(kmean_ret$centers), aes(x = PC1, y = PC2), col = "black", shape = 21, size = 5) +
+scale_color_manual(labels = c("LumA", "Her2", "Basal", "LumB"), 
+values = scales::hue_pal()(4)) +
+scale_shape_manual(labels = c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4"),
+values = c(4, 16,17,18)) +
+theme_bw() +
+labs(color = "Breast Cancer Sub-type", shape = "Cluster") +
+xlab("PC1") +
+ylab("PC2")
+
+p
+
+table(brca_subtype, kmean_ret$cluster)
+
+```
+The clustering seems to be able to generally discern the 4 subtypes into groups however it is not entirely accurate. There are definitely blurred regions and significant overlap where the results are not correct.
+
     c) Compare the clustering result from applying kmeans to the original data and the clustering result from applying kmeans to 4 PCs. Does PCA help in kmeans clustering? What might be the reasons if PCA helps?
+    
+<p style="color:blue"> Based on analysis of the discrepancy tables for both and the plot it seems that they agree quite well with each other. This means we can use the 3 principal components rather than all the dimensions in the original dataset. This makes the kmeans process more efficient, easier to interpret, and can lend better results. </p>
     
     d) Now we have an x patient with breast cancer but with unknown sub-type. We have this patient's mRNA sequencing data. Project this x patient to the space of PC1 and PC2. (Hint: remember we remove some gene with no counts or no variablity, take log and centered) Plot this patient in the plot in iv) with a black dot. Calculate the Euclidean distance between this patient and each of centroid of the cluster. Can you tell which sub-type this patient might have? 
     
-```{r}
+```{r 2 3d, eval = F, echo=TRUE}
 x_patient <- fread("data/brca_x_patient.csv")
+x_patient
+
+x_patient <- log2(as.matrix(x_patient+1e-10))
+x_patient_centered <- t(t(x_patient) - rowMeans(x_patient))
+pc1score <- pca_ret_centered_unscaled$x[,1] * x_patient_centered
 ```
-
-
-# Case study 3: Auto data set
-
-This question utilizes the `Auto` dataset from ISLR. The original dataset contains 408 observations about cars. It is similar to the CARS dataset that we use in our lectures. To get the data, first install the package ISLR. The `Auto` dataset should be loaded automatically. We'll use this dataset to practice the methods learn so far. 
-Original data source is here: https://archive.ics.uci.edu/ml/datasets/auto+mpg
-
-Get familiar with this dataset first. Tip: you can use the command `?ISLR::Auto` to view a description of the dataset. 
-
-## EDA
-Explore the data, with particular focus on pairwise plots and summary statistics. Briefly summarize your findings and any peculiarities in the data.
-
-
-## What effect does `time` have on `MPG`?
-
-a) Start with a simple regression of `mpg` vs. `year` and report R's `summary` output. Is `year` a significant variable at the .05 level? State what effect `year` has on `mpg`, if any, according to this model. 
-
-b) Add `horsepower` on top of the variable `year` to your linear model. Is `year` still a significant variable at the .05 level? Give a precise interpretation of the `year`'s effect found here. 
-
-c) The two 95% CI's for the coefficient of year differ among (i) and (ii). How would you explain the difference to a non-statistician?
-
-d) Create a model with interaction by fitting `lm(mpg ~ year * horsepower)`. Is the interaction effect significant at .05 level? Explain the year effect (if any). 
-
-## Categorical predictors
-
-Remember that the same variable can play different roles! Take a quick look at the variable `cylinders`, and try to use this variable in the following analyses wisely. We all agree that a larger number of cylinders will lower mpg. However, we can interpret `cylinders` as either a continuous (numeric) variable or a categorical variable.
-
-a) Fit a model that treats `cylinders` as a continuous/numeric variable. Is `cylinders` significant at the 0.01 level? What effect does `cylinders` play in this model?
-
-b) Fit a model that treats `cylinders` as a categorical/factor. Is `cylinders` significant at the .01 level? What is the effect of `cylinders` in this model? Describe the `cylinders` effect over `mpg`. 
-
-c) What are the fundamental differences between treating `cylinders` as a continuous and categorical variable in your models? 
-
-d) Can you test the null hypothesis: fit0: `mpg` is linear in `cylinders` vs. fit1: `mpg` relates to `cylinders` as a categorical variable at .01 level?  
-
-
-## Results
-
-Final modeling question: we want to explore the effects of each feature as best as possible. You may explore interactions, feature transformations, higher order terms, or other strategies within reason. The model(s) should be as parsimonious (simple) as possible unless the gain in accuracy is significant from your point of view.
-  
-a) Describe the final model. Include diagnostic plots with particular focus on the model residuals and diagnoses.
-
-b) Summarize the effects found.
-
-c) Predict the `mpg` of the following car: A red car built in the US in 1983 that is 180 inches long, has eight cylinders, displaces 350 cu. inches, weighs 4000 pounds, and has a horsepower of 260. Also give a 95% CI for your prediction.
-
 
 # Simple Regression through simulations
     
@@ -488,7 +621,10 @@ i. Find the LS estimates of $\boldsymbol{\beta}_0$ and $\boldsymbol{\beta}_1$, u
 
 From the `lm()` function, we get $\boldsymbol{\beta}_0 = 1.331$ and $\boldsymbol{\beta}_1 = 0.906$, vs true values of 1 and 1.2, so this isn't a perfect estimate, which is a result of the normal error with SD of 2.
 
-```{r LS estimates}
+```{r LS estimates, echo=TRUE}
+x <- seq(0, 1, length = 40)
+set.seed(1)
+y <- 1+1.2*x+rnorm(40,0,sd=2)
 pairs <- data.frame(x = x, y = y)
 plot(x,y,
      main="sample output vector for y according to y = 1 + 1.2x + normal error with sd=2")
@@ -500,34 +636,48 @@ ii. What is your RSE for this linear model fit? Is it close to $\sigma = 2$?
 
 The RSE is 1.79 which is fairly close to 2 (10.3% off)
 
-```{r rse of model}
+```{r rse of model, echo=TRUE}
 rse <- summary(fit1)$sigma
 rse
 (rse-2)/2
 ```
 
-ii. What is the 95% confidence interval for $\boldsymbol{\beta}_1$? Does this confidence interval capture the true $\boldsymbol{\beta}_1$?
+iii. What is the 95% confidence interval for $\boldsymbol{\beta}_1$? Does this confidence interval capture the true $\boldsymbol{\beta}_1$?
+
+```{r Confidence Interval, echo=TRUE}
+summary(fit1)
+```
+
+The 95% CI is determined by the estimate +/- 1.96*SE. So here it would be .906 +/- 1.879: [-.973, 2.785]. Yes, this interval captures the true value of 1.2.
+
+iv. Overlay the LS estimates and the true lines of the mean function onto a copy of the scatterplot you made above.
 
 
-iii. Overlay the LS estimates and the true lines of the mean function onto a copy of the scatterplot you made above.
-
-
-```{r LS estimates}
-plot(x,y,
-     main="sample output vector for y according to y = 1 + 1.2x + normal error with sd=2")
-plot(fit1)
-
+```{r LS estimates 4 124, echo=TRUE}
+plot(pairs$x, pairs$y,
+pch = 16,
+xlab = "X",
+ylab = "Y",
+main = "Overlay of LS estimations and mean function")
+abline(fit1, col="red", lwd=4) # many other ways.
+abline(h=mean(pairs$y), lwd=5, col="blue") # add a horizontal line, y=mean(y)
 ```
 
 ### diagnoses
 
 i. Provide residual plot where fitted $\mathbf{y}$-values are on the x-axis and residuals are on the y-axis. 
 
+```{r Residual Plot and QQ plot, echo=TRUE}
+plot(fit1)
+```
+
 ii. Provide a normal QQ plot of the residuals.
+
+See part above 
 
 iii. Comment on how well the model assumptions are met for the sample you used. 
 
-
+The first assumption is linearity. The residuals seem to be relatively symmetric with respect to h=0 so this assumption is satisfied. The second assumption is homoscedasticity which also seems to be satsified as the residuals are evenly distributed across the band. Finally, the residuals seem to mostly fit the normal distribution according to the qq plot. However, there is some significant deviation at the bottom tail.
 
 ## Understand sampling distribution and confidence intervals
 
@@ -544,7 +694,7 @@ lower_ci <- 0             # lower bound for beta_1. Initialize to 0 for now.
 t_star <- qt(0.975, 38)   # Food for thought: why 38 instead of 40? What is t_star?
 
 # Perform the simulation
-for (i in 1:n_sim){I l
+for (i in 1:n_sim){
   y <- 1 + 1.2 * x + rnorm(40, sd = 2)
   lse <- lm(y ~ x)
   lse_output <- summary(lse)$coefficients
@@ -554,15 +704,52 @@ for (i in 1:n_sim){I l
   lower_ci[i] <- b1[i] - t_star * se
 }
 results <- as.data.frame(cbind(se, b1, upper_ci, lower_ci))
-
+results
 # remove unecessary variables from our workspace
 rm(se, b1, upper_ci, lower_ci, x, n_sim, b1, t_star, lse, lse_out) 
 ```
 
 i. Summarize the LS estimates of $\boldsymbol{\beta}_1$ (stored in `results$b1`). Does the sampling distribution agree with theory? 
+```{r LS estimates summary, echo=TRUE}
+# Inializing variables. Note b_1, upper_ci, lower_ci are vectors
+x <- seq(0, 1, length = 40) 
+n_sim <- 100              # number of simulations
+b1 <- 0                   # n_sim many LS estimates of beta_1 (=1.2). Initialize to 0 for now
+upper_ci <- 0             # upper bound for beta_1. Initialize to 0 for now.
+lower_ci <- 0             # lower bound for beta_1. Initialize to 0 for now.
+t_star <- qt(0.975, 38)   # Food for thought: why 38 instead of 40? What is t_star?
+
+# Perform the simulation
+for (i in 1:n_sim){
+  y <- 1 + 1.2 * x + rnorm(40, sd = 2)
+  lse <- lm(y ~ x)
+  lse_output <- summary(lse)$coefficients
+  se <- lse_output[2, 2]
+  b1[i] <- lse_output[2, 1]
+  upper_ci[i] <- b1[i] + t_star * se
+  lower_ci[i] <- b1[i] - t_star * se
+}
+results <- as.data.frame(cbind(se, b1, upper_ci, lower_ci))
+## inserting from above^
+
+summary(results$b1)
+sample_sd <- sd(results$b1)/sqrt(length(results$b1))
+ci_lower = mean(results$b1) - 1.96*sample_sd
+ci_upper = mean(results$b1) + 1.96*sample_sd
+paste("Lower CI interval: ",ci_lower)
+paste("Higher CI interval: ",ci_upper)
+```
+We see that the mean of the sampling distribution is 1.07 while the theoretical value should be 1.2. The estimate is not perfect but we do see that true value is captured within a 95% confidence interval of the sampiling mean, therefore we could say that the sampiling distribution agrees with theory.
 
 ii.  How many of your 95% confidence intervals capture the true $\boldsymbol{\beta}_1$? Display your confidence intervals graphically. 
+```{r Confidence Interval Summ, echo=TRUE}
+sample_number = c(1:100)
+p1 <- ggplot(results, aes(sample_number, b1)) + geom_point() + 
+geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci))
 
-
+p1 + ggtitle("Confidence Interval for Each Sample")
+total_including <- sum(results$lower_ci<=1.2 & results$upper_ci>=1.2)
+paste("Number of Confidence Intervals including true value: ",total_including)
+```
 
 
