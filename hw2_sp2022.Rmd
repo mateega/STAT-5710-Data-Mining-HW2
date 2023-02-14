@@ -1,9 +1,9 @@
 ---
 title: "Modern Data Mining, HW 2"
 author:
-- Group Member 1
-- Group Member 2
-- Group Member 3
+- Spencer Mateega
+- Aditya Maddipatla
+- Mehul Suri
 date: 'Due: 11:59 PM,  Sunday, 02/12'
 output:
   html_document:
@@ -144,15 +144,14 @@ summary(temp)
 levels(as.factor(temp$Job05))
 table(as.factor(temp$Job05))
 ```
-<p style="color:blue">
-Observations:
 
-* Some of the income values are negative -- this doesn't seem right.
-* Many Jobs5 are missing values.
-* Some of the HeightFeet05 are negative which doesn't make sense.
-* A number of test score values are 0, which I would assume means these people never took these exams.
-* All of the esteem columns seem to be missing no entries.
-</p>
+<p style="color:blue">Observations:</p>
+
+* <p style="color:blue">Some of the income values are negative -- this doesn't seem right.</p>
+* <p style="color:blue">Many Jobs5 are missing values.</p>
+* <p style="color:blue">Some of the HeightFeet05 are negative which doesn't make sense.</p>
+* <p style="color:blue">A number of test score values are 0, which I would assume means these people never took these exams.</p>
+* <p style="color:blue">All of the esteem columns seem to be missing no entries.</p>
 
 ## Self esteem evaluation
 
@@ -160,15 +159,15 @@ Let concentrate on Esteem scores evaluated in 87.
 
 0. First do a quick summary over all the `Esteem` variables. Pay attention to missing values, any peculiar numbers etc. How do you fix problems discovered if there is any? Briefly describe what you have done for the data preparation. 
 
-Observations:
+<p style="color:blue">Observations:
 
-<p style="color:blue">
-* There are no missing values.
-* The average of the possible respondent responses (1-4) is 2.5. However, all of the questions either skew agree (i.e., a 1.5 mean) or skew disagree (i.e., a 3.5 mean).
-* One possible issue is that when a respondent responses agree, their response could indicate either low or high self esteem based on the question asked. For example, a person with strong self esteem would response with a low number (1 or 2) to a question like Question 1: “I am a person of worth” but with a high number (3 or 4) to a question like Question 5: “I do not have much to be proud of." We will solve this issue in the following step.
-</p>
+* <p style="color:blue">There are no missing values.</p>
+* <p style="color:blue">The average of the possible respondent responses (1-4) is 2.5. However, all of the questions either skew agree (i.e., a 1.5 mean) or skew disagree (i.e., a 3.5 mean).</p>
+* <p style="color:blue">One possible issue is that when a respondent responses agree, their response could indicate either low or high self esteem based on the question asked. For example, a person with strong self esteem would response with a low number (1 or 2) to a question like Question 1: “I am a person of worth” but with a high number (3 or 4) to a question like Question 5: “I do not have much to be proud of." We will solve this issue in the following step.</p>
 
 ```{r summary over esteem variables, echo=TRUE} 
+temp <- read.csv('data/NLSY79.csv', header = T, stringsAsFactors = F)
+
 summary(temp$Esteem87_1)
 summary(temp$Esteem87_2)
 summary(temp$Esteem87_3)
@@ -227,7 +226,7 @@ summary(data.esteem$q10)
 
 3. Do esteem scores all positively correlated? Report the pairwise correlation table and write a brief summary.
 
-* There is a positive coorelation between all esteem scores. This reachnes from 0.24 (q1 and q9) to 0.7 (q1 and q2).
+* <p style="color:blue"> There is a positive coorelation between all esteem scores. This reachnes from 0.24 (q1 and q9) to 0.7 (q1 and q2).</p>
 
 ```{r correlation table, eval = F, echo=TRUE} 
 data.esteem
@@ -576,7 +575,7 @@ p
 table(brca_subtype, kmean_ret$cluster)
 
 ```
-The clustering seems to be able to generally discern the 4 subtypes into groups however it is not entirely accurate. There are definitely blurred regions and significant overlap where the results are not correct.
+<p style="color:blue">The clustering seems to be able to generally discern the 4 subtypes into groups however it is not entirely accurate. There are definitely blurred regions and significant overlap where the results are not correct.</p>
 
     c) Compare the clustering result from applying kmeans to the original data and the clustering result from applying kmeans to 4 PCs. Does PCA help in kmeans clustering? What might be the reasons if PCA helps?
     
@@ -584,7 +583,7 @@ The clustering seems to be able to generally discern the 4 subtypes into groups 
     
     d) Now we have an x patient with breast cancer but with unknown sub-type. We have this patient's mRNA sequencing data. Project this x patient to the space of PC1 and PC2. (Hint: remember we remove some gene with no counts or no variablity, take log and centered) Plot this patient in the plot in iv) with a black dot. Calculate the Euclidean distance between this patient and each of centroid of the cluster. Can you tell which sub-type this patient might have? 
     
-```{r 2 3d, eval = F, echo=TRUE}
+```{r 2 4d, eval = F, echo=TRUE}
 x_patient <- fread("data/brca_x_patient.csv")
 x_patient
 
@@ -634,7 +633,7 @@ fit1
 
 ii. What is your RSE for this linear model fit? Is it close to $\sigma = 2$? 
 
-The RSE is 1.79 which is fairly close to 2 (10.3% off)
+<p style="color:blue">The RSE is 1.79 which is fairly close to 2 (10.3% off)</p>
 
 ```{r rse of model, echo=TRUE}
 rse <- summary(fit1)$sigma
@@ -648,7 +647,7 @@ iii. What is the 95% confidence interval for $\boldsymbol{\beta}_1$? Does this c
 summary(fit1)
 ```
 
-The 95% CI is determined by the estimate +/- 1.96*SE. So here it would be .906 +/- 1.879: [-.973, 2.785]. Yes, this interval captures the true value of 1.2.
+<p style="color:blue">The 95% CI is determined by the estimate +/- 1.96*SE. So here it would be .906 +/- 1.879: [-.973, 2.785]. Yes, this interval captures the true value of 1.2.</p>
 
 iv. Overlay the LS estimates and the true lines of the mean function onto a copy of the scatterplot you made above.
 
@@ -673,11 +672,11 @@ plot(fit1)
 
 ii. Provide a normal QQ plot of the residuals.
 
-See part above 
+<p style="color:blue">See part above </p>
 
 iii. Comment on how well the model assumptions are met for the sample you used. 
 
-The first assumption is linearity. The residuals seem to be relatively symmetric with respect to h=0 so this assumption is satisfied. The second assumption is homoscedasticity which also seems to be satsified as the residuals are evenly distributed across the band. Finally, the residuals seem to mostly fit the normal distribution according to the qq plot. However, there is some significant deviation at the bottom tail.
+<p style="color:blue">The first assumption is linearity. The residuals seem to be relatively symmetric with respect to h=0 so this assumption is satisfied. The second assumption is homoscedasticity which also seems to be satsified as the residuals are evenly distributed across the band. Finally, the residuals seem to mostly fit the normal distribution according to the qq plot. However, there is some significant deviation at the bottom tail.</p>
 
 ## Understand sampling distribution and confidence intervals
 
@@ -739,7 +738,7 @@ ci_upper = mean(results$b1) + 1.96*sample_sd
 paste("Lower CI interval: ",ci_lower)
 paste("Higher CI interval: ",ci_upper)
 ```
-We see that the mean of the sampling distribution is 1.07 while the theoretical value should be 1.2. The estimate is not perfect but we do see that true value is captured within a 95% confidence interval of the sampiling mean, therefore we could say that the sampiling distribution agrees with theory.
+<p style="color:blue">We see that the mean of the sampling distribution is 1.07 while the theoretical value should be 1.2. The estimate is not perfect but we do see that true value is captured within a 95% confidence interval of the sampiling mean, therefore we could say that the sampiling distribution agrees with theory.</p>
 
 ii.  How many of your 95% confidence intervals capture the true $\boldsymbol{\beta}_1$? Display your confidence intervals graphically. 
 ```{r Confidence Interval Summ, echo=TRUE}
